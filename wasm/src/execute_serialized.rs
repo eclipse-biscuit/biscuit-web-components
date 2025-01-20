@@ -2,8 +2,9 @@ use crate::{
     get_parse_errors, get_position, log, Editor, Fact, Marker, ParseError, SourcePosition,
 };
 use biscuit_auth::{
-    builder, error, parser::parse_block_source, parser::parse_source, parser::SourceResult,
-    AuthorizerLimits, Biscuit, PublicKey,
+    builder, error,
+    parser::{parse_block_source, parse_source, SourceResult},
+    AuthorizerBuilder, AuthorizerLimits, Biscuit, PublicKey,
 };
 use serde::{Deserialize, Serialize};
 use std::default::Default;
@@ -61,8 +62,10 @@ pub fn execute_serialized(query: &JsValue) -> JsValue {
 }
 
 pub fn execute_inner(query: BiscuitQuery) -> Result<BiscuitResult, ExecuteErrors> {
-    let public_key =
-        PublicKey::from_bytes_hex(&query.root_public_key).map_err(|_| error::Token::InternalError);
+    let public_key: Result<PublicKey, error::Token> = query
+        .root_public_key
+        .parse()
+        .map_err(|_| error::Token::InternalError);
 
     let deser: Result<Biscuit, error::Token> = public_key
         .clone()
@@ -82,7 +85,7 @@ pub fn execute_inner(query: BiscuitQuery) -> Result<BiscuitResult, ExecuteErrors
         Err(ExecuteErrors {
             root_key: public_key.err().map(|e| e.to_string()),
             token: deser.err().map(|e| e.to_string()),
-            authorizer: authorizer.err().unwrap_or(Vec::new()),
+            authorizer: authorizer.err().unwrap_or_default(),
         })
     }
 }
@@ -116,27 +119,27 @@ fn perform_authorization(
         biscuit_result.token_blocks.push(Editor::default());
     }
 
-    let mut authorizer = token.authorizer().unwrap();
+    let mut authorizer_builder = AuthorizerBuilder::new();
     let mut authorizer_checks = Vec::new();
     let mut authorizer_policies = Vec::new();
 
     for (_, fact) in authorizer_source.facts.iter() {
-        authorizer.add_fact(fact.clone()).unwrap();
+        authorizer_builder = authorizer_builder.fact(fact.clone()).unwrap();
     }
 
     for (_, rule) in authorizer_source.rules.iter() {
-        authorizer.add_rule(rule.clone()).unwrap();
+        authorizer_builder = authorizer_builder.rule(rule.clone()).unwrap();
     }
 
     for (i, check) in authorizer_source.checks.iter() {
-        authorizer.add_check(check.clone()).unwrap();
+        authorizer_builder = authorizer_builder.check(check.clone()).unwrap();
         let position = get_position(authorizer_code, i);
         // checks are marked as success until they fail
         authorizer_checks.push((position, true));
     }
 
     for (i, policy) in authorizer_source.policies.iter() {
-        authorizer.add_policy(policy.clone()).unwrap();
+        authorizer_builder = authorizer_builder.policy(policy.clone()).unwrap();
         let position = get_position(authorizer_code, i);
         authorizer_policies.push(position);
     }
@@ -145,6 +148,7 @@ fn perform_authorization(
         max_time: std::time::Duration::from_secs(2),
         ..Default::default()
     };
+    let mut authorizer = authorizer_builder.build(token).unwrap();
     let authorizer_result = authorizer.authorize_with_limits(limits);
 
     // todo extract scope information as well

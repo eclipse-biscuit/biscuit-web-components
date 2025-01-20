@@ -1,9 +1,10 @@
 {
   "name": "@biscuit-auth/biscuit-wasm-support",
+  "type": "module",
   "collaborators": [
     "Geoffroy Couprie <contact@geoffroycouprie.com>"
   ],
-  "version": "0.5.1",
+  "version": "0.6.0-alpha.1",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -15,7 +16,7 @@
     "biscuit.d.ts",
     "snippets"
   ],
-  "module": "biscuit.js",
+  "main": "biscuit.js",
   "types": "biscuit.d.ts",
   "sideEffects": [
     "./snippets/*"

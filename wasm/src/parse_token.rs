@@ -50,7 +50,7 @@ fn parse_token_inner(query: ParseTokenQuery) -> ParseResult {
     let external_keys = token
         .external_public_keys()
         .into_iter()
-        .map(|ok| ok.map(hex::encode))
+        .map(|ok| ok.map(|pk| pk.to_string()))
         .collect();
 
     ParseResult {
