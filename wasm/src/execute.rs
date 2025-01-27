@@ -1,6 +1,7 @@
 use crate::execute_serialized;
 use crate::generate_token;
 use crate::{Editor, Fact, ParseErrors};
+use biscuit_auth::Algorithm;
 use biscuit_auth::{error, KeyPair};
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -49,11 +50,11 @@ pub fn execute(query: &JsValue) -> JsValue {
 
 fn execute_inner(query: BiscuitQuery) -> Result<BiscuitResult, ParseErrors> {
     let mut rng: StdRng = SeedableRng::seed_from_u64(0);
-    let root_key = KeyPair::new_with_rng(&mut rng);
+    let root_key = KeyPair::new_with_rng(Algorithm::Ed25519, &mut rng);
     let creation_query = generate_token::GenerateToken {
         token_blocks: query.token_blocks.clone(),
         external_private_keys: query.external_private_keys,
-        private_key: root_key.private().to_bytes_hex(),
+        private_key: root_key.private().to_prefixed_string(),
     };
 
     let serialized = generate_token::generate_token_inner(creation_query).map_err(|e| match e {
@@ -64,8 +65,8 @@ fn execute_inner(query: BiscuitQuery) -> Result<BiscuitResult, ParseErrors> {
     let execute_query = execute_serialized::BiscuitQuery {
         token: serialized.clone(),
         token_blocks: Some(query.token_blocks.clone()),
-        root_public_key: root_key.public().to_bytes_hex(),
-        authorizer_code: query.authorizer_code.unwrap_or(String::new()),
+        root_public_key: root_key.public().to_string(),
+        authorizer_code: query.authorizer_code.unwrap_or_default(),
         query: query.query,
     };
 

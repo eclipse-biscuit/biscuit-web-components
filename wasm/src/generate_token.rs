@@ -34,19 +34,30 @@ pub fn generate_keypair() -> JsValue {
     let kp = KeyPair::new();
 
     serde_wasm_bindgen::to_value(&KeyPairJs {
-        private_key: kp.private().to_bytes_hex(),
-        public_key: kp.public().to_bytes_hex(),
+        private_key: kp.private().to_prefixed_string(),
+        public_key: kp.public().to_string(),
+    })
+    .unwrap()
+}
+
+#[wasm_bindgen]
+pub fn generate_ecdsa_keypair() -> JsValue {
+    let kp = KeyPair::new_with_algorithm(biscuit_auth::Algorithm::Secp256r1);
+
+    serde_wasm_bindgen::to_value(&KeyPairJs {
+        private_key: kp.private().to_prefixed_string(),
+        public_key: kp.public().to_string(),
     })
     .unwrap()
 }
 
 #[wasm_bindgen]
 pub fn get_public_key(private_key: String) -> Result<String, JsValue> {
-    let private = PrivateKey::from_bytes_hex(private_key.as_str()).map_err(|err| {
+    let private: PrivateKey = private_key.as_str().parse().map_err(|err| {
         serde_wasm_bindgen::to_value(&GenerateTokenError::KeyPairError(err)).unwrap()
     })?;
     let public = private.public();
-    Ok(public.to_bytes_hex())
+    Ok(public.to_string())
 }
 
 #[wasm_bindgen]
@@ -87,7 +98,7 @@ pub fn generate_token_inner(query: GenerateToken) -> Result<String, GenerateToke
             .into_iter()
             .map(|ok| {
                 let res = ok.map(|k| {
-                    PrivateKey::from_bytes_hex(&k)
+                    k.parse()
                         .map_err(|_| GenerateTokenError::Biscuit(error::Token::InternalError))
                         .map(|pk| KeyPair::from(&pk))
                 });
@@ -108,21 +119,21 @@ fn generate_token_from_blocks(
     blocks: Vec<SourceResult>,
     external_private_keys: Vec<Option<KeyPair>>,
 ) -> Result<String, error::Token> {
-    let keypair = KeyPair::from(&PrivateKey::from_bytes_hex(&query.private_key)?);
+    let keypair = KeyPair::from(&query.private_key.parse()?);
     let mut builder = Biscuit::builder();
 
     let authority_parsed = &blocks[0];
 
     for (_, fact) in authority_parsed.facts.iter() {
-        builder.add_fact(fact.clone()).unwrap();
+        builder = builder.fact(fact.clone()).unwrap();
     }
 
     for (_, rule) in authority_parsed.rules.iter() {
-        builder.add_rule(rule.clone()).unwrap();
+        builder = builder.rule(rule.clone()).unwrap();
     }
 
     for (_, check) in authority_parsed.checks.iter() {
-        builder.add_check(check.clone()).unwrap();
+        builder = builder.check(check.clone()).unwrap();
     }
 
     let mut token = builder.build(&keypair)?;
@@ -136,15 +147,15 @@ fn generate_token_from_blocks(
             let mut builder = BlockBuilder::new();
 
             for (_, fact) in block_parsed.facts.iter() {
-                builder.add_fact(fact.clone()).unwrap();
+                builder = builder.fact(fact.clone()).unwrap();
             }
 
             for (_, rule) in block_parsed.rules.iter() {
-                builder.add_rule(rule.clone()).unwrap();
+                builder = builder.rule(rule.clone()).unwrap();
             }
 
             for (_, check) in block_parsed.checks.iter() {
-                builder.add_check(check.clone()).unwrap();
+                builder = builder.check(check.clone()).unwrap();
             }
 
             let block = req.create_block(&epk.private(), builder)?;
@@ -153,15 +164,15 @@ fn generate_token_from_blocks(
             let mut builder = BlockBuilder::new();
 
             for (_, fact) in block_parsed.facts.iter() {
-                builder.add_fact(fact.clone()).unwrap();
+                builder = builder.fact(fact.clone()).unwrap();
             }
 
             for (_, rule) in block_parsed.rules.iter() {
-                builder.add_rule(rule.clone()).unwrap();
+                builder = builder.rule(rule.clone()).unwrap();
             }
 
             for (_, check) in block_parsed.checks.iter() {
-                builder.add_check(check.clone()).unwrap();
+                builder = builder.check(check.clone()).unwrap();
             }
             token = token.append(builder)?;
         }

@@ -72,15 +72,15 @@ fn attenuate_token_from_blocks(
         let mut builder = BlockBuilder::new();
 
         for (_, fact) in block_parsed.facts.iter() {
-            builder.add_fact(fact.clone()).unwrap();
+            builder = builder.fact(fact.clone()).unwrap();
         }
 
         for (_, rule) in block_parsed.rules.iter() {
-            builder.add_rule(rule.clone()).unwrap();
+            builder = builder.rule(rule.clone()).unwrap();
         }
 
         for (_, check) in block_parsed.checks.iter() {
-            builder.add_check(check.clone()).unwrap();
+            builder = builder.check(check.clone()).unwrap();
         }
 
         output = output.append(builder)?;
