@@ -18,6 +18,7 @@ import {
 export class BCDatalogPlayground extends LitElement {
   @property() code = "";
   @property() showBlocks = false;
+  @property() fromHash = false;
   @state() blocks: Array<{ code: string; externalKey: string | null }> = [];
   @state() private started = false;
 
@@ -39,6 +40,26 @@ export class BCDatalogPlayground extends LitElement {
         return { code, externalKey };
       })
       .filter(({ code }, i) => i === 0 || code !== "");
+    setTimeout(() => this.updateFromHash(), 0);
+  }
+
+  updateFromHash() {
+    if (!this.fromHash) return;
+    let hashContents;
+    try {
+      hashContents = JSON.parse(atob(window.location.hash.substr(1)));
+    } catch (e) {
+      console.error({ e });
+    }
+    const [code, blocks] = hashContents;
+    this.code = code;
+    this.blocks = blocks;
+  }
+
+  updateHash() {
+    if (!this.fromHash) return;
+    const ser = [this.code, this.blocks];
+    window.location.hash = btoa(JSON.stringify(ser));
   }
 
   firstUpdated() {
@@ -49,6 +70,7 @@ export class BCDatalogPlayground extends LitElement {
     const newBlocks = [...this.blocks];
     newBlocks.push({ code: "", externalKey: null });
     this.blocks = newBlocks;
+    this.updateHash();
   }
 
   onUpdatedBlock(blockId: number, e: { detail: { code: string } }) {
@@ -58,6 +80,7 @@ export class BCDatalogPlayground extends LitElement {
       externalKey: newBlocks[blockId].externalKey,
     };
     this.blocks = newBlocks;
+    this.updateHash();
   }
 
   onUpdatedExternalKey(blockId: number, e: InputEvent) {
@@ -68,10 +91,12 @@ export class BCDatalogPlayground extends LitElement {
       externalKey: newValue !== "" ? newValue : null,
     };
     this.blocks = newBlocks;
+    this.updateHash();
   }
 
   onUpdatedCode(e: { detail: { code: string } }) {
     this.code = e.detail.code;
+    this.updateHash();
   }
 
   render() {
