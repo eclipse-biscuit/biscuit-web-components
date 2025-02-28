@@ -97,6 +97,9 @@ export class BcDatalogEditor extends LitElement {
   @state()
   _query: Parser.Query | null = null;
 
+  @state()
+  _selectedText: [number, string] | null = null;
+
   constructor() {
     super();
 
@@ -153,6 +156,16 @@ export class BcDatalogEditor extends LitElement {
     this.syncScroll();
   }
 
+  handleSelection(e: { target: HTMLTextAreaElement }) {
+    const { value, selectionStart, selectionEnd } = e.target;
+    const selected = value?.slice(selectionStart, selectionEnd);
+    if (selectionEnd > selectionStart) {
+      this._selectedText = [selectionStart, selected];
+    } else {
+      this._selectedText = null;
+    }
+  }
+
   syncScroll() {
     if (this.shadowRoot) {
       const textarea = this.shadowRoot.querySelector("#editing");
@@ -165,7 +178,33 @@ export class BcDatalogEditor extends LitElement {
   }
 
   render() {
-    const rendered = this.renderText2(this.code, this._captures, this.marks);
+    const highlights: Range[] = [];
+
+    if (this._selectedText != null) {
+      const [selStart, selContents] = this._selectedText;
+      let lastMatch = -1;
+      let res;
+      do {
+        res = this.code.slice(lastMatch + 1).indexOf(selContents);
+        lastMatch = res + lastMatch + 1;
+        if (res !== -1 && lastMatch !== selStart) {
+          highlights.push({
+            name: "mark.highlight",
+            node: {
+              startIndex: lastMatch,
+              endIndex: lastMatch + selContents.length,
+            },
+          });
+        }
+      } while (res !== -1);
+    }
+
+    const rendered = this.renderText(
+      this.code,
+      this._captures,
+      this.marks,
+      highlights
+    );
     const rows = Math.max(this.code.split("\n").length, 1);
     return html`<div id="wrapper">
       <textarea
@@ -178,6 +217,7 @@ export class BcDatalogEditor extends LitElement {
           dispatchCustomEvent(this, "update", { code });
         }}
         @keydown=${(e: Event) => e.stopPropagation()}
+        @selectionchange=${this.handleSelection}
         spellcheck="false"
         @scroll=${this.syncScroll}
       >
@@ -190,7 +230,12 @@ ${this.code}</textarea
     </div>`;
   }
 
-  renderText2(text: string, captures: Range[], marks: Range[]) {
+  renderText(
+    text: string,
+    captures: Range[],
+    marks: Range[],
+    highlights: Range[]
+  ) {
     // captures come from tree-sitter and are assumed to be properly nested
     // (if nested at all, they are mostly contiguous).
     // marks however are user provided and completely separate from TS. so even
@@ -201,13 +246,16 @@ ${this.code}</textarea
     // captures and marks are grouped by starting index. We know that an
     // opening tag will always be there at this position.
     const ranges = new Map();
-    marks.concat(captures).forEach((c) => {
-      if (c.node.startIndex >= c.node.endIndex) return;
-      ranges.set(
-        c.node.startIndex,
-        (ranges.get(c.node.startIndex) ?? []).concat(c)
-      );
-    });
+    marks
+      .concat(captures)
+      .concat(highlights)
+      .forEach((c) => {
+        if (c.node.startIndex >= c.node.endIndex) return;
+        ranges.set(
+          c.node.startIndex,
+          (ranges.get(c.node.startIndex) ?? []).concat(c)
+        );
+      });
 
     let output = "";
     // active ranges, indexed by their end index
@@ -385,6 +433,7 @@ ${this.code}</textarea
       --red: #f07171;
       --red-bg: rgba(240, 113, 113, 0.3);
       --yellow: #ffaa33;
+      --yellow-bg: rgba(255, 170, 51, 0.3);
     }
 
     .constant {
@@ -434,6 +483,10 @@ ${this.code}</textarea
 
     .mark.success {
       background-color: var(--green-bg);
+    }
+
+    .mark.highlight {
+      background-color: var(--yellow-bg);
     }
 
     .hint {
