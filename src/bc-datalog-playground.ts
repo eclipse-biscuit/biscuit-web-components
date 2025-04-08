@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2021 Geoffroy Couprie <contact@geoffroycouprie.com>, Clément Delafargue <clement@delafargue.name>
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 import { html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Range } from "./bc-datalog-editor";

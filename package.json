@@ -41,12 +41,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/biscuit-auth/biscuit-web-components.git"
+    "url": "git+https://github.com/eclipse-biscuit/biscuit-web-components.git"
   },
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/biscuit-auth/biscuit-web-components/issues"
+    "url": "https://github.com/eclipse-biscuit/biscuit-web-components/issues"
   },
-  "homepage": "https://github.com/biscuit-auth/biscuit-web-components#readme",
+  "homepage": "https://github.com/eclipse-biscuit/biscuit-web-components#readme",
   "description": ""
 }
