@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2021 Geoffroy Couprie <contact@geoffroycouprie.com>, Clément Delafargue <clement@delafargue.name>
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 use crate::{
     get_parse_errors, get_position, log, Editor, Fact, Marker, ParseError, SourcePosition,
 };

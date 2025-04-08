@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2021 Geoffroy Couprie <contact@geoffroycouprie.com>, Clément Delafargue <clement@delafargue.name>
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 use crate::execute_serialized;
 use crate::generate_token;
 use crate::{Editor, Fact, ParseErrors};
