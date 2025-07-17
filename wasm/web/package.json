@@ -4,7 +4,7 @@
   "collaborators": [
     "Geoffroy Couprie <contact@geoffroycouprie.com>"
   ],
-  "version": "0.6.0-beta.1",
+  "version": "0.6.0",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
