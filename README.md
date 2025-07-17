@@ -1,4 +1,11 @@
-# How to update tree-sitter
+# `biscuit-web-components`
+
+This repo is part of the [eclipse biscuit](https://github.com/biscuit-auth/biscuit) project.
+
+Biscuit web components are tools used to provide in-browser biscuit tooling.
+See [documentation](https://doc.biscuitsec.org/usage/web-components.html)
+
+## How to update tree-sitter
 
 Tree-sitter is packaged in a way that makes it difficult to load it up with `wds`, it is packaged as a CommonJS module (modifying a `module.exports` object) and as such does not play well with es modules.
 
