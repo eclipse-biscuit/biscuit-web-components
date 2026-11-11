@@ -4,6 +4,7 @@
   "collaborators": [
     "Geoffroy Couprie <contact@geoffroycouprie.com>"
   ],
+  "description": "WebAssembly support library for the biscuit web components",
   "version": "0.6.0",
   "license": "Apache-2.0",
   "repository": {

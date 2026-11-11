@@ -27,11 +27,6 @@ enum AttenuationError {
     Biscuit(error::Token),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct AttenuateTokenResult {
-    pub attenuated: Result<String, AttenuationError>,
-}
-
 #[wasm_bindgen]
 pub fn attenuate_token(query: &JsValue) -> JsValue {
     let query = serde_wasm_bindgen::from_value(query.clone()).unwrap();

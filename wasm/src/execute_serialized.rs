@@ -297,7 +297,7 @@ fn perform_authorization(
     biscuit_result
 }
 
-fn parse_authorizer(authorizer_code: &str) -> Result<SourceResult, Vec<ParseError>> {
+fn parse_authorizer(authorizer_code: &str) -> Result<SourceResult<'_>, Vec<ParseError>> {
     parse_source(authorizer_code).map_err(|errors| get_parse_errors(authorizer_code, &errors))
 }
 
