@@ -1,7 +1,7 @@
 {
   "name": "@biscuit-auth/web-components",
   "type": "module",
-  "main": "dist/cjs/src/index.js",
+  "main": "dist/esm/src/index.js",
   "module": "dist/esm/src/index.js",
   "types": "dist/esm/src/index.d.ts",
   "files": [
@@ -15,7 +15,7 @@
     "test": "wtr test/**/*.test.js --node-resolve",
     "test:watch": "wtr --watch test/**/*.test.js --node-resolve",
     "build": "tsc",
-    "prepublishOnly": "npm run build-lint && tsc && tsc -p tsconfig-cjs.json && cp tree-sitter.js dist/esm && cp tree-sitter.d.ts dist/esm && cp -r assets dist/",
+    "prepublishOnly": "npm run build-lint && tsc && cp -r assets dist/esm/",
     "build-lint": "tsc && eslint src --ext .ts && prettier -c src",
     "format": "prettier -w src",
     "lint-fix": "eslint src --ext .ts --fix"
@@ -26,10 +26,12 @@
     "@typescript-eslint/parser": "^5.7.0",
     "lit": "^2.0.0",
     "lit-analyzer": "^1.2.1",
-    "tslib": "2.3.1"
+    "tslib": "2.3.1",
+    "web-tree-sitter": "^0.26.13"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^13.0.6",
+    "@types/emscripten": "^1.41.6",
     "@web/dev-server": "^0.1.28",
     "@web/dev-server-esbuild": "^0.2.16",
     "@web/test-runner": "^0.13.22",

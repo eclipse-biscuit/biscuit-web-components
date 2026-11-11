@@ -7,8 +7,10 @@ import { css, html, LitElement, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { ifDefined } from "lit/directives/if-defined.js";
-import { Parser } from "../tree-sitter.js";
+import { Language, Parser, Query, QueryCapture, Tree } from "web-tree-sitter";
 import { dispatchCustomEvent } from "./lib/events.js";
+
+const treeSitterReady = Parser.init();
 
 const QUERY = `
 ;; Literals
@@ -26,13 +28,8 @@ const QUERY = `
 (variable) @variable
 (param) @variable.parameter
 
-(predicate
-  (nname) @function
-)
-
-(fact
-  (nname) @function
-)
+(predicate_name) @function
+(method_name) @function.method
 
 ;; Keywords
 [
@@ -92,15 +89,15 @@ export class BcDatalogEditor extends LitElement {
   @property()
   readonly = false;
   @state()
-  _tree: Parser.Tree | null = null;
+  _tree: Tree | null = null;
   @state()
-  _captures: Parser.QueryCapture[] = [];
+  _captures: QueryCapture[] = [];
 
   @state()
   _parser: Parser | null = null;
 
   @state()
-  _query: Parser.Query | null = null;
+  _query: Query | null = null;
 
   constructor() {
     super();
@@ -114,18 +111,21 @@ export class BcDatalogEditor extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     console.log("connected callback");
-    console.log("Parser initialized");
-    console.log(Parser.Language);
-    Parser.Language.load("/assets/tree-sitter-biscuit.wasm").then(
-      (BiscuitDatalog) => {
+    treeSitterReady
+      .then(() => {
+        console.log("Parser initialized");
+        return Language.load(
+          new URL("../assets/tree-sitter-biscuit.wasm", import.meta.url).href
+        );
+      })
+      .then((BiscuitDatalog) => {
         console.log("Language initialized");
         const p = new Parser();
         p.setLanguage(BiscuitDatalog);
-        this._query = BiscuitDatalog.query(QUERY);
+        this._query = new Query(BiscuitDatalog, QUERY);
         this._parser = p;
         this.handleInput(this.code);
-      }
-    );
+      });
   }
 
   firstUpdated(values: PropertyValues) {
@@ -150,9 +150,8 @@ export class BcDatalogEditor extends LitElement {
     if (this._parser && this._query) {
       const code = value ?? "";
       const tree = this._parser.parse(code);
-      const captures = this._query.captures(tree.rootNode);
       this._tree = tree;
-      this._captures = captures;
+      this._captures = tree ? this._query.captures(tree.rootNode) : [];
       this.code = code;
     }
     this.syncScroll();
@@ -463,41 +462,9 @@ ${this.code}</textarea
         --red-bg: rgba(240, 113, 120, 0.5);
         --yellow: #e6b450;
       }
-      .comment {
-        color: var(--gray);
-        text-transform: italic;
-      }
       .error {
         color: var(--red);
         font-weight: bold;
-      }
-      .hint {
-        color: var(--blue);
-        font-weight: bold;
-      }
-      .constant {
-        color: var(--magenta);
-      }
-      .function {
-        color: var(--yellow);
-      }
-      .keyword {
-        color: var(--orange);
-      }
-      .operator {
-        color: var(--orange);
-      }
-      .punctuation {
-        color: var(--foreground);
-      }
-      .string {
-        color: var(--green);
-      }
-      .variable {
-        color: var(--foreground);
-      }
-      .warning {
-        color: var(--yellow);
       }
     }
   `;
