@@ -123,6 +123,7 @@ export type AuthorizerResult = {
   >;
   authorizer_world: Array<Fact>;
   token_blocks: Array<{ markers: Array<LibMarker> }>;
+  query_result?: QueryResult;
 };
 
 export type GeneratorError = {
@@ -155,6 +156,13 @@ export type SnapshotData = {
   code: string;
   iterations: number;
   elapsed_micros?: bigint;
+  steps: number;
   authorization_result: Result<number, { FailedLogic?: LogicError }>;
-  query_result?: Result<Array<Fact>, LogicError>;
+  query_result?: QueryResult;
+};
+
+export type QueryResult = {
+  facts: Result<Array<Fact>, LogicError>;
+  elapsed_micros?: bigint;
+  steps: number;
 };
