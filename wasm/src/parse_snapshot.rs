@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-use crate::Fact;
+use crate::{run_query, QueryResult};
 use biscuit_auth::{datalog::RunLimits, error, Authorizer};
 use serde::{Deserialize, Serialize};
 use std::{default::Default, time::Duration};
@@ -25,8 +25,9 @@ struct ParseResult {
     pub code: String,
     pub iterations: u64,
     pub elapsed_micros: Option<u128>,
+    pub steps: u64,
     pub authorization_result: Result<usize, error::Token>,
-    pub query_result: Option<Result<Vec<Fact>, error::Token>>,
+    pub query_result: Option<QueryResult>,
 }
 
 #[wasm_bindgen]
@@ -45,6 +46,7 @@ fn inspect_snapshot_inner(query: InspectSnapshotQuery) -> Result<ParseResult, er
     let code = authorizer.to_string();
     let iterations = authorizer.iterations();
     let elapsed_micros = authorizer.execution_time().map(|d| d.as_micros());
+    let steps = authorizer.elapsed_steps();
 
     let authorization_result = {
         authorizer.authorize_with_limits(RunLimits {
@@ -53,12 +55,13 @@ fn inspect_snapshot_inner(query: InspectSnapshotQuery) -> Result<ParseResult, er
         })
     };
 
-    let query_result = query.query.map(|q| authorizer.query(q.as_str()));
+    let query_result = query.query.map(|q| run_query(&mut authorizer, q.as_str()));
 
     Ok(ParseResult {
         code,
         iterations,
         elapsed_micros,
+        steps,
         authorization_result,
         query_result,
     })

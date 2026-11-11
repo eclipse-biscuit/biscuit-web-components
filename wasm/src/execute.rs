@@ -5,7 +5,7 @@
  */
 use crate::execute_serialized;
 use crate::generate_token;
-use crate::{Editor, Fact, ParseErrors};
+use crate::{Editor, Fact, ParseErrors, QueryResult};
 use biscuit_auth::Algorithm;
 use biscuit_auth::{error, PrivateKey};
 use rand::prelude::*;
@@ -28,7 +28,7 @@ pub struct BiscuitResult {
     pub authorizer_editor: Option<Editor>,
     pub authorizer_result: Result<usize, error::Token>,
     pub authorizer_world: Vec<Fact>,
-    pub query_result: Vec<Fact>,
+    pub query_result: Option<QueryResult>,
 }
 
 impl Default for BiscuitResult {
@@ -39,7 +39,7 @@ impl Default for BiscuitResult {
             authorizer_editor: None,
             authorizer_result: Ok(0),
             authorizer_world: Vec::new(),
-            query_result: Vec::new(),
+            query_result: None,
         }
     }
 }

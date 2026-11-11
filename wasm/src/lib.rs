@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-use biscuit_auth::builder;
+use biscuit_auth::{builder, error, Authorizer};
 use log::*;
 use nom::Offset;
 use serde::{Deserialize, Serialize};
@@ -88,6 +88,28 @@ impl From<builder::Fact> for Fact {
                 .map(|t| t.to_string())
                 .collect(),
         }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QueryResult {
+    pub facts: Result<Vec<Fact>, error::Token>,
+    pub elapsed_micros: Option<u128>,
+    pub steps: u64,
+}
+
+/// runs a query on the authorizer, only counting the time and steps
+/// spent on the query itself
+pub fn run_query(authorizer: &mut Authorizer, query: &str) -> QueryResult {
+    let steps_before = authorizer.elapsed_steps();
+    let time_before = authorizer.execution_time().map_or(0, |t| t.as_micros());
+    let facts = authorizer.query(query);
+    QueryResult {
+        facts,
+        elapsed_micros: authorizer
+            .execution_time()
+            .map(|t| t.as_micros().saturating_sub(time_before)),
+        steps: authorizer.elapsed_steps().saturating_sub(steps_before),
     }
 }
 
