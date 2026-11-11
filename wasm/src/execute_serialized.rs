@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 use crate::{
-    get_parse_errors, get_position, log, Editor, Fact, Marker, ParseError, SourcePosition,
+    get_parse_errors, get_position, run_query, Editor, Fact, Marker, ParseError, QueryResult,
+    SourcePosition,
 };
 use biscuit_auth::{
-    builder, error,
+    error,
     parser::{parse_block_source, parse_source, SourceResult},
     AuthorizerBuilder, AuthorizerLimits, Biscuit, PublicKey,
 };
@@ -30,7 +31,7 @@ pub struct BiscuitResult {
     pub authorizer_editor: Editor,
     pub authorizer_result: Result<usize, error::Token>,
     pub authorizer_world: Vec<Fact>,
-    pub query_result: Vec<Fact>,
+    pub query_result: Option<QueryResult>,
 }
 
 impl Default for BiscuitResult {
@@ -40,7 +41,7 @@ impl Default for BiscuitResult {
             authorizer_editor: Editor::default(),
             authorizer_result: Ok(0),
             authorizer_world: Vec::new(),
-            query_result: Vec::new(),
+            query_result: None,
         }
     }
 }
@@ -266,38 +267,16 @@ fn perform_authorization(
 
     biscuit_result.authorizer_result = authorizer_result;
 
-    if let Some(query) = query.as_ref() {
-        log(&format!("got query content: {}", query));
+    // todo check what the origin should be
+    biscuit_result.query_result = query
+        .as_deref()
+        .filter(|q| !q.is_empty())
+        .map(|q| run_query(&mut authorizer, q));
 
-        // todo check what the origin should be
-        if !query.is_empty() {
-            let query_result: Result<Vec<builder::Fact>, biscuit_auth::error::Token> =
-                authorizer.query(query.as_str());
-            match query_result {
-                Err(e) => {
-                    log(&format!("query error: {:?}", e));
-                }
-                Ok(mut facts) => {
-                    biscuit_result.query_result = facts
-                        .drain(..)
-                        .map(|mut fact| Fact {
-                            name: fact.predicate.name,
-                            terms: fact
-                                .predicate
-                                .terms
-                                .drain(..)
-                                .map(|term| term.to_string())
-                                .collect(),
-                        })
-                        .collect();
-                }
-            }
-        }
-    }
     biscuit_result
 }
 
-fn parse_authorizer(authorizer_code: &str) -> Result<SourceResult, Vec<ParseError>> {
+fn parse_authorizer(authorizer_code: &str) -> Result<SourceResult<'_>, Vec<ParseError>> {
     parse_source(authorizer_code).map_err(|errors| get_parse_errors(authorizer_code, &errors))
 }
 
