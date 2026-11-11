@@ -8,7 +8,7 @@ use biscuit_auth::{
     builder::BlockBuilder,
     error,
     parser::{parse_block_source, SourceResult},
-    Biscuit, KeyPair, PrivateKey,
+    Biscuit, PrivateKey,
 };
 use serde::{Deserialize, Serialize};
 use std::default::Default;
@@ -36,10 +36,10 @@ pub struct KeyPairJs {
 
 #[wasm_bindgen]
 pub fn generate_keypair() -> JsValue {
-    let kp = KeyPair::new();
+    let kp = PrivateKey::new();
 
     serde_wasm_bindgen::to_value(&KeyPairJs {
-        private_key: kp.private().to_prefixed_string(),
+        private_key: kp.to_prefixed_string(),
         public_key: kp.public().to_string(),
     })
     .unwrap()
@@ -47,10 +47,10 @@ pub fn generate_keypair() -> JsValue {
 
 #[wasm_bindgen]
 pub fn generate_ecdsa_keypair() -> JsValue {
-    let kp = KeyPair::new_with_algorithm(biscuit_auth::Algorithm::Secp256r1);
+    let kp = PrivateKey::new_with_algorithm(biscuit_auth::Algorithm::Secp256r1);
 
     serde_wasm_bindgen::to_value(&KeyPairJs {
-        private_key: kp.private().to_prefixed_string(),
+        private_key: kp.to_prefixed_string(),
         public_key: kp.public().to_string(),
     })
     .unwrap()
@@ -97,7 +97,7 @@ pub fn generate_token_inner(query: GenerateToken) -> Result<String, GenerateToke
     if has_errors {
         Err(GenerateTokenError::Parse(parse_errors))
     } else {
-        let private_keys: Result<Vec<Option<KeyPair>>, GenerateTokenError> = query
+        let private_keys: Result<Vec<Option<PrivateKey>>, GenerateTokenError> = query
             .external_private_keys
             .clone()
             .into_iter()
@@ -105,7 +105,6 @@ pub fn generate_token_inner(query: GenerateToken) -> Result<String, GenerateToke
                 let res = ok.map(|k| {
                     k.parse()
                         .map_err(|_| GenerateTokenError::Biscuit(error::Token::InternalError))
-                        .map(|pk| KeyPair::from(&pk))
                 });
                 res.transpose()
             })
@@ -122,9 +121,9 @@ pub fn generate_token_inner(query: GenerateToken) -> Result<String, GenerateToke
 fn generate_token_from_blocks(
     query: &GenerateToken,
     blocks: Vec<SourceResult>,
-    external_private_keys: Vec<Option<KeyPair>>,
+    external_private_keys: Vec<Option<PrivateKey>>,
 ) -> Result<String, error::Token> {
-    let keypair = KeyPair::from(&query.private_key.parse()?);
+    let root_key: PrivateKey = query.private_key.parse()?;
     let mut builder = Biscuit::builder();
 
     let authority_parsed = &blocks[0];
@@ -141,7 +140,7 @@ fn generate_token_from_blocks(
         builder = builder.check(check.clone()).unwrap();
     }
 
-    let mut token = builder.build(&keypair)?;
+    let mut token = builder.build(&root_key)?;
 
     for (i, block_parsed) in blocks.iter().enumerate().skip(1) {
         let external_key = external_private_keys.get(i);
@@ -163,7 +162,7 @@ fn generate_token_from_blocks(
                 builder = builder.check(check.clone()).unwrap();
             }
 
-            let block = req.create_block(&epk.private(), builder)?;
+            let block = req.create_block(epk, builder)?;
             token = token.append_third_party(epk.public(), block)?;
         } else {
             let mut builder = BlockBuilder::new();
