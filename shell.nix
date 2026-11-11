@@ -1,5 +1,5 @@
-{ pkgs ? import <nixpkgs> {}}: with pkgs;
+{ pkgs ? import <unstable> {}}: with pkgs;
 
 mkShell {
-  buildInputs = [ nodejs-16_x ];
+  buildInputs = [ nodejs ];
 }
