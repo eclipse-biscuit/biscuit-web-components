@@ -22,6 +22,7 @@ import {
   convertError,
   trimLines,
 } from "./lib/adapters";
+import { renderQueryResult } from "./lib/query";
 
 /**
  * TODO DOCS
@@ -46,6 +47,12 @@ export class BcTokenPrinter extends LitElement {
   @property()
   showAttenuation = false;
 
+  @property()
+  showQuery = false;
+
+  @property()
+  query = "";
+
   @state()
   extraBlocks: Array<string> = [];
 
@@ -57,6 +64,10 @@ export class BcTokenPrinter extends LitElement {
     const authorizerChild = this.querySelector(".authorizer");
     if (authorizerChild !== null) {
       this.authorizer = trimLines(authorizerChild.textContent ?? "");
+    }
+    const queryChild = this.querySelector(".query");
+    if (queryChild !== null) {
+      this.query = trimLines(queryChild.textContent ?? "");
     }
   }
 
@@ -76,6 +87,11 @@ export class BcTokenPrinter extends LitElement {
   _onUpdatedAuthorizer(e: { detail: { code: string } }) {
     if (!this.showAuthorizer) return;
     this.authorizer = e.detail.code;
+  }
+
+  _onUpdatedQuery(e: { detail: { code: string } }) {
+    if (!this.showQuery) return;
+    this.query = e.detail.code;
   }
 
   _onUpdatedExtraBlock(blockId: number, e: { detail: { code: string } }) {
@@ -196,12 +212,35 @@ export class BcTokenPrinter extends LitElement {
           @bc-authorizer-editor:update=${this._onUpdatedAuthorizer}
         >
         </bc-authorizer-editor>
+        ${this.renderQueryInput()}
       </div>
       <div class="content">
         <p>Result</p>
         ${this.renderAuthorizerResult(result)}
+        ${this.renderAuthorizerQueryResult(result)}
       </div>
     `;
+  }
+
+  renderQueryInput() {
+    if (!this.showQuery) return;
+
+    return html`
+      <p>Query authorizer</p>
+      <bc-datalog-editor
+        code=${this.query}
+        @bc-datalog-editor:update=${this._onUpdatedQuery}
+      >
+      </bc-datalog-editor>
+    `;
+  }
+
+  renderAuthorizerQueryResult(
+    result: Result<AuthorizerResult, AuthorizerError>
+  ) {
+    if (!this.showQuery) return;
+    const queryResult = result.Ok?.query_result;
+    return queryResult && renderQueryResult(queryResult);
   }
 
   renderAuthorizerResult(result: Result<AuthorizerResult, AuthorizerError>) {
@@ -297,7 +336,7 @@ export class BcTokenPrinter extends LitElement {
       token: this.biscuit,
       root_public_key: this.rootPublicKey,
       authorizer_code: this.authorizer,
-      query: "",
+      query: this.showQuery ? this.query : "",
     };
     const authorizerResult = execute_serialized(authorizerQuery);
     const blockMarkers =

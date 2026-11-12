@@ -11,12 +11,11 @@ import { inspect_snapshot } from "@biscuit-auth/biscuit-wasm-support";
 import {
   AuthorizerError,
   AuthorizerResult,
-  Fact,
-  LogicError,
   Result,
   SnapshotInspectionResult,
   trimLines,
 } from "./lib/adapters";
+import { renderDuration, renderQueryResult } from "./lib/query";
 
 /**
  * TODO DOCS
@@ -115,6 +114,7 @@ export class BcSnapshotPrinter extends LitElement {
       code,
       elapsed_micros,
       iterations,
+      steps,
       authorization_result,
       query_result,
     } = result.snapshot.Ok!;
@@ -131,24 +131,17 @@ export class BcSnapshotPrinter extends LitElement {
     return html`
       ${this.renderSnapshotInput()}
       <div class="content">
-        <p>Elapsed time: ${this.renderDuration(elapsed_micros)}</p>
+        <p>Elapsed time: ${renderDuration(elapsed_micros)}</p>
         <p>Iterations: ${iterations}</p>
+        <p>Steps: ${steps}</p>
         <p>Snapshot contents</p>
         <bc-datalog-editor code=${code} .marks=${[]} readonly="true">
         </bc-datalog-editor>
         <bc-authorizer-result .content=${auth_res}></bc-authorizer-result>
         ${this.renderQueryInput()}
-        ${query_result && this.renderQueryResult(query_result)}
+        ${query_result && renderQueryResult(query_result)}
       </div>
     `;
-  }
-
-  renderDuration(micros?: bigint) {
-    if (micros === undefined) {
-      return "n/a";
-    }
-
-    return `${micros}μs`;
   }
 
   renderQueryInput() {
@@ -164,16 +157,6 @@ export class BcSnapshotPrinter extends LitElement {
     `;
   }
 
-  renderQueryResult(result: Result<Array<Fact>, LogicError>) {
-    if (result.Err) {
-      console.error(result.Err);
-      return html`<p>error</p>`;
-    } else {
-      return html`<bc-authorizer-content .content=${result.Ok!}>
-      </bc-authorizer-content>`;
-    }
-  }
-
   render() {
     if (!this._started) return this.renderNotStarted();
     const inspectQuery = {
@@ -182,6 +165,7 @@ export class BcSnapshotPrinter extends LitElement {
       query: this.query != "" ? this.query : undefined,
     };
     const parseResult = inspect_snapshot(inspectQuery);
+    console.log({ parseResult });
 
     return html` <div class="row">${this.renderResult(parseResult)}</div> `;
   }
