@@ -76,10 +76,7 @@ export type Range = {
   };
 };
 
-export type Result<A, E> = {
-  Ok?: A;
-  Err?: E;
-};
+export type Result<A, E> = { ok: true; value: A } | { ok: false; error: E };
 
 export type AuthorizerError = {
   authorizer: Array<LibError>;
@@ -93,52 +90,89 @@ export type Fact = {
   terms: Array<string>;
 };
 
-export type Check = {
-  Block: {
-    block_id: number;
-    check_id: number;
-    rule: string;
-  };
-};
+export type FailedCheck =
+  | {
+      type: "block";
+      value: { block_id: number; check_id: number; rule: string };
+    }
+  | { type: "authorizer"; value: { check_id: number; rule: string } };
 
-export type LogicError = {
-  Unauthorized?: {
-    checks: Array<Check>;
-    policy: { Allow?: number; Deny?: number };
-  };
-  NoMatchingPolicy?: {
-    checks: Array<Check>;
-  };
-};
+export type MatchedPolicy =
+  | { type: "allow"; value: number }
+  | { type: "deny"; value: number };
+
+export type LogicError =
+  | {
+      type: "unauthorized";
+      value: { policy: MatchedPolicy; checks: Array<FailedCheck> };
+    }
+  | { type: "no_matching_policy"; value: { checks: Array<FailedCheck> } }
+  | { type: "invalid_block_rule"; value: [number, string] }
+  | { type: "authorizer_not_empty" };
+
+export type FormatError =
+  | { type: "invalid_key_size"; value: number }
+  | {
+      type:
+        | "signature"
+        | "sealed_signature"
+        | "empty_keys"
+        | "unknown_public_key"
+        | "deserialization_error"
+        | "serialization_error"
+        | "block_deserialization_error"
+        | "block_serialization_error"
+        | "version"
+        | "invalid_signature_size"
+        | "invalid_key"
+        | "signature_deserialization_error"
+        | "block_signature_deserialization_error"
+        | "invalid_block_id"
+        | "existing_public_key"
+        | "symbol_table_overlap"
+        | "public_key_table_overlap"
+        | "unknown_external_key"
+        | "unknown_symbol"
+        | "token_limit"
+        | "block_limit"
+        | "pkcs8";
+      value?: unknown;
+    };
+
+export type TokenError =
+  | { type: "failed_logic"; value: LogicError }
+  | { type: "format"; value: FormatError }
+  | {
+      type:
+        | "internal_error"
+        | "append_on_sealed"
+        | "already_sealed"
+        | "language"
+        | "run_limit"
+        | "conversion_error"
+        | "base64"
+        | "execution";
+      value?: unknown;
+    };
 
 export type AuthorizerResult = {
   authorizer_editor: {
     markers: Array<LibMarker>;
   };
-  authorizer_result: Result<
-    number,
-    {
-      FailedLogic?: LogicError;
-    }
-  >;
+  authorizer_result: Result<number, TokenError>;
   authorizer_world: Array<Fact>;
   token_blocks: Array<{ markers: Array<LibMarker> }>;
   query_result?: QueryResult;
 };
 
-export type GeneratorError = {
-  Biscuit?: "InternalError" | { Format?: { InvalidKeySize?: number } };
-  Parse?: {
-    blocks: Array<Array<LibError>>;
-  };
-};
+export type GeneratorError =
+  | { type: "parse"; value: { blocks: Array<Array<LibError>> } }
+  | { type: "biscuit"; value: TokenError }
+  | { type: "key_pair_error"; value: FormatError };
 
-export type AttenuactionError = {
-  Biscuit?: { Format?: { InvalidKeySize?: number } };
-  BlockParseErrors?: {
-    blocks: Array<Array<LibError>>;
-  };
-};
+export type AttenuationError =
+  | { type: "block_parse_errors"; value: { blocks: Array<Array<LibError>> } }
+  | { type: "biscuit"; value: TokenError };
 
 export function trimLines(str: string) {
   return str
@@ -149,7 +183,7 @@ export function trimLines(str: string) {
 }
 
 export type SnapshotInspectionResult = {
-  snapshot: Result<SnapshotData, LogicError>;
+  snapshot: Result<SnapshotData, TokenError>;
 };
 
 export type SnapshotData = {
@@ -157,12 +191,12 @@ export type SnapshotData = {
   iterations: number;
   elapsed_micros?: bigint;
   steps: number;
-  authorization_result: Result<number, { FailedLogic?: LogicError }>;
+  authorization_result: Result<number, TokenError>;
   query_result?: QueryResult;
 };
 
 export type QueryResult = {
-  facts: Result<Array<Fact>, LogicError>;
+  facts: Result<Array<Fact>, TokenError>;
   elapsed_micros?: bigint;
   steps: number;
 };

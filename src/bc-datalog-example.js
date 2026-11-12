@@ -67,8 +67,8 @@ export class BcDatalogExample extends LitElement {
       };
       var result = execute(state);
 
-      authorizer_result = result.authorizer_result;
-      authorizer_world = result.authorizer_world;
+      authorizer_result = result.ok ? result.value.authorizer_result : null;
+      authorizer_world = result.ok ? result.value.authorizer_world : [];
 
       if (result.authorizer_editor != null) {
         for (let error of result.authorizer_editor.errors) {

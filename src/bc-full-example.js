@@ -99,8 +99,8 @@ export class BcFullExample extends LitElement {
     var blockMarkers = [];
 
     // handle parse errors
-    if (result.Ok === undefined) {
-      for (let b of result.Err.blocks) {
+    if (!result.ok) {
+      for (let b of result.error.blocks) {
         var errors = [];
         var marks = [];
         for (let error of b) {
@@ -114,7 +114,7 @@ export class BcFullExample extends LitElement {
         blockParseErrors.push(errors);
       }
 
-      for (let error of result.Err.authorizer) {
+      for (let error of result.error.authorizer) {
         parseErrors.push({
           message: error.message,
           severity: "error",
@@ -123,7 +123,7 @@ export class BcFullExample extends LitElement {
         });
       }
     } else {
-      for (let b of result.Ok.token_blocks) {
+      for (let b of result.value.token_blocks) {
         var marks = [];
 
         for (let marker of b.markers) {
@@ -137,7 +137,7 @@ export class BcFullExample extends LitElement {
         blockMarkers.push(marks);
       }
 
-      for (let marker of result.Ok.authorizer_editor.markers) {
+      for (let marker of result.value.authorizer_editor.markers) {
         console.log(marker);
         markers.push({
           start: marker.position.start,
@@ -147,8 +147,8 @@ export class BcFullExample extends LitElement {
       }
     }
 
-    authorizer_world = result.Ok?.authorizer_world ?? [];
-    authorizer_result = result.Ok?.authorizer_result ?? null;
+    authorizer_world = result.ok ? result.value.authorizer_world : [];
+    authorizer_result = result.ok ? result.value.authorizer_result : null;
 
     return html`
       <div class="blocks">

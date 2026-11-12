@@ -12,8 +12,12 @@ import {
   convertMarker,
   convertError,
   trimLines,
+  AuthorizerError,
+  AuthorizerResult,
+  Fact,
   LibMarker,
   LibError,
+  Result,
 } from "./lib/adapters";
 
 /**
@@ -80,13 +84,16 @@ export class BCDatalogPlayground extends LitElement {
   }
 
   render() {
-    let authorizer_world = [];
+    let authorizer_world: Array<Fact> = [];
     let authorizer_result = null;
-    const parseErrors = {
+    const parseErrors: {
+      blocks: Array<Array<Range>>;
+      authorizer: Array<Range>;
+    } = {
       blocks: [],
       authorizer: [],
     };
-    const markers = {
+    const markers: { blocks: Array<Array<Range>>; authorizer: Array<Range> } = {
       blocks: [],
       authorizer: [],
     };
@@ -100,23 +107,24 @@ export class BCDatalogPlayground extends LitElement {
           ({ externalKey }) => externalKey
         ),
       };
-      const authorizerResult = execute(authorizerQuery);
+      const authorizerResult: Result<AuthorizerResult, AuthorizerError> =
+        execute(authorizerQuery);
       console.warn({ authorizerQuery, authorizerResult });
-      authorizer_world = authorizerResult.Ok?.authorizer_world ?? [];
       authorizer_result = authorizerResult;
-      markers.authorizer =
-        authorizerResult.Ok?.authorizer_editor.markers.map(convertMarker) ?? [];
-      parseErrors.authorizer =
-        authorizerResult.Err?.authorizer.map(convertError) ?? [];
-
-      markers.blocks =
-        authorizerResult.Ok?.token_blocks.map(
+      if (authorizerResult.ok) {
+        const value = authorizerResult.value;
+        authorizer_world = value.authorizer_world;
+        markers.authorizer = value.authorizer_editor.markers.map(convertMarker);
+        markers.blocks = value.token_blocks.map(
           (b: { markers: Array<LibMarker> }) => b.markers.map(convertMarker)
-        ) ?? [];
-      parseErrors.blocks =
-        authorizerResult.Err?.blocks.map((b: Array<LibError>) =>
+        );
+      } else {
+        const error = authorizerResult.error;
+        parseErrors.authorizer = error.authorizer.map(convertError);
+        parseErrors.blocks = error.blocks.map((b: Array<LibError>) =>
           b.map(convertError)
-        ) ?? [];
+        );
+      }
     }
 
     return html`

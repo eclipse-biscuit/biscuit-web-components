@@ -5,7 +5,7 @@
  */
 import { css, html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import "./bc-datalog-editor";
+import { Range } from "./bc-datalog-editor";
 import { initialize } from "./wasm.js";
 import {
   execute_serialized,
@@ -13,6 +13,7 @@ import {
   attenuate_token,
 } from "@biscuit-auth/biscuit-wasm-support";
 import {
+  AttenuationError,
   AuthorizerError,
   AuthorizerResult,
   LibError,
@@ -146,7 +147,7 @@ export class BcTokenPrinter extends LitElement {
       revocation_id: string;
       external_key?: string;
     }>,
-    blockMarkers: Array<LibMarker>
+    blockMarkers: Array<Array<Range>>
   ) {
     if (this.biscuit === "") {
       return html`
@@ -191,8 +192,8 @@ export class BcTokenPrinter extends LitElement {
   renderAuthorizer(result: Result<AuthorizerResult, AuthorizerError>) {
     if (!this.showAuthorizer) return;
 
-    const markers = result.Ok?.authorizer_editor.markers ?? [];
-    const errors = result.Err?.authorizer ?? [];
+    const markers = result.ok ? result.value.authorizer_editor.markers : [];
+    const errors = result.ok ? [] : result.error.authorizer;
 
     return html`
       <div class="code">
@@ -239,7 +240,7 @@ export class BcTokenPrinter extends LitElement {
     result: Result<AuthorizerResult, AuthorizerError>
   ) {
     if (!this.showQuery) return;
-    const queryResult = result.Ok?.query_result;
+    const queryResult = result.ok ? result.value.query_result : undefined;
     return queryResult && renderQueryResult(queryResult);
   }
 
@@ -275,13 +276,18 @@ export class BcTokenPrinter extends LitElement {
   renderAttenuation(blocksOffset: number) {
     if (!this.showAttenuation) return;
 
-    const result = attenuate_token({
+    const result: Result<string, AttenuationError> = attenuate_token({
       token: this.biscuit,
       blocks: this.extraBlocks.filter((b) => b !== ""),
     });
 
+    const blockParseErrors =
+      !result.ok && result.error.type === "block_parse_errors"
+        ? result.error.value
+        : undefined;
+
     const blocksWithErrors: Array<number> = [];
-    (result.Err?.BlockParseErrors?.blocks ?? []).forEach(
+    (blockParseErrors?.blocks ?? []).forEach(
       (errors: Array<LibError>, bId: number) => {
         if (errors.length > 0) {
           blocksWithErrors.push(bId);
@@ -304,14 +310,14 @@ export class BcTokenPrinter extends LitElement {
     if (this.biscuit == "") {
       attenuated = html`Please enter a base64-encoded token`;
     } else {
-      attenuated = result.Ok ?? errorMessage;
+      attenuated = result.ok ? result.value : errorMessage;
     }
 
     return html`
       <div class="code">
         <p>Extra blocks</p>
         ${this.extraBlocks.map((_, id) => {
-          const blockErrors = result.Err?.BlockParseErrors?.blocks[id] ?? [];
+          const blockErrors = blockParseErrors?.blocks[id] ?? [];
           return this.renderExtraBlock(id, blockErrors, blocksOffset);
         })}
         <button @click=${this._addExtraBlock}>Add block</button>
@@ -338,11 +344,13 @@ export class BcTokenPrinter extends LitElement {
       authorizer_code: this.authorizer,
       query: this.showQuery ? this.query : "",
     };
-    const authorizerResult = execute_serialized(authorizerQuery);
-    const blockMarkers =
-      authorizerResult.Ok?.token_blocks.map(
-        (b: { markers: Array<LibMarker> }) => b.markers.map(convertMarker)
-      ) ?? [];
+    const authorizerResult: Result<AuthorizerResult, AuthorizerError> =
+      execute_serialized(authorizerQuery);
+    const blockMarkers = authorizerResult.ok
+      ? authorizerResult.value.token_blocks.map(
+          (b: { markers: Array<LibMarker> }) => b.markers.map(convertMarker)
+        )
+      : [];
 
     // Extra blocks numbers are offset by the amount of blocks already in the token
     const blocksOffset = blocks.length;

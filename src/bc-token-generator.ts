@@ -169,15 +169,17 @@ export class BcTokenGenerator extends LitElement {
     let result: Result<string, GeneratorError>;
 
     try {
-      result = {
-        Ok: generate_token(query),
-      };
+      result = { ok: true, value: generate_token(query) };
     } catch (error) {
-      result = { Err: error as GeneratorError };
+      result = { ok: false, error: error as GeneratorError };
     }
 
+    const error = result.ok ? undefined : result.error;
+    const parseErrors = error?.type === "parse" ? error.value : undefined;
+    const biscuitError = error?.type === "biscuit" ? error.value : undefined;
+
     const blocksWithErrors: Array<number> = [];
-    (result.Err?.Parse?.blocks ?? []).forEach(
+    (parseErrors?.blocks ?? []).forEach(
       (errors: Array<LibError>, bId: number) => {
         if (errors.length > 0) {
           blocksWithErrors.push(bId);
@@ -187,11 +189,11 @@ export class BcTokenGenerator extends LitElement {
 
     let errorMessage = "Please correct the datalog input";
 
-    if (result.Err?.Biscuit === "InternalError") {
+    if (biscuitError?.type === "internal_error") {
       errorMessage = "Please provide an authority block";
     } else if (
-      typeof result.Err?.Biscuit === "object" &&
-      result.Err?.Biscuit?.Format?.InvalidKeySize !== undefined
+      biscuitError?.type === "format" &&
+      biscuitError.value.type === "invalid_key_size"
     ) {
       errorMessage = "Please enter (or generate) a valid private key";
     } else if (blocksWithErrors.length > 0) {
@@ -203,14 +205,14 @@ export class BcTokenGenerator extends LitElement {
         blockList;
     }
 
-    const token = result.Ok ?? errorMessage;
+    const token = result.ok ? result.value : errorMessage;
 
     return html`
       <div class="row">
         <div class="code">
           ${this.renderKeyInput()}
           ${this._blocks.map((code, id) => {
-            const blockErrors = result.Err?.Parse?.blocks[id] ?? [];
+            const blockErrors = parseErrors?.blocks[id] ?? [];
             return this.renderBlock(id, blockErrors);
           })}
           <button @click=${this.addBlock}>Add block</button>
