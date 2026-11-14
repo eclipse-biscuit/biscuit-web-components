@@ -19,7 +19,7 @@ java -jar org.eclipse.dash.licenses-1.1.0.jar package-lock.json
 
 (you’ll need to download the [eclipse dash licenses jar](repo.eclipse.org/content/repositories/dash-licenses/org/eclipse/dash/org.eclipse.dash.licenses/))
 
-This step should be automated at some point.
+This check runs in CI, in `.github/workflows/licenses.yml`.
 
 ## Requesting a release review
 
