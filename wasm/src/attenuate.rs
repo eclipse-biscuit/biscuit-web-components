@@ -22,6 +22,7 @@ struct AttenuateTokenQuery {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", content = "value", rename_all = "snake_case")]
 enum AttenuationError {
     BlockParseErrors(ParseErrors),
     Biscuit(error::Token),
@@ -33,7 +34,7 @@ pub fn attenuate_token(query: &JsValue) -> JsValue {
 
     let result = attenuate_token_inner(query);
 
-    serde_wasm_bindgen::to_value(&result).unwrap()
+    crate::js_result::to_js_value(&result)
 }
 
 fn attenuate_token_inner(query: AttenuateTokenQuery) -> Result<String, AttenuationError> {

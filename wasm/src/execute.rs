@@ -26,6 +26,7 @@ pub struct BiscuitResult {
     pub token_blocks: Vec<Editor>,
     pub token_content: String,
     pub authorizer_editor: Option<Editor>,
+    #[serde(with = "crate::js_result")]
     pub authorizer_result: Result<usize, error::Token>,
     pub authorizer_world: Vec<Fact>,
     pub query_result: Option<QueryResult>,
@@ -50,7 +51,7 @@ pub fn execute(query: &JsValue) -> JsValue {
 
     let result = execute_inner(query);
 
-    serde_wasm_bindgen::to_value(&result).unwrap()
+    crate::js_result::to_js_value(&result)
 }
 
 fn execute_inner(query: BiscuitQuery) -> Result<BiscuitResult, ParseErrors> {
