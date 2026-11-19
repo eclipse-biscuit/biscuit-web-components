@@ -16,6 +16,59 @@ mod execute_serialized;
 mod generate_token;
 mod parse_snapshot;
 mod parse_token;
+
+mod js_result {
+    use serde::{de, ser::SerializeStruct, Deserialize, Deserializer, Serialize, Serializer};
+
+    pub fn serialize<T: Serialize, E: Serialize, S: Serializer>(
+        result: &Result<T, E>,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error> {
+        let mut s = serializer.serialize_struct("Result", 2)?;
+        match result {
+            Ok(value) => {
+                s.serialize_field("ok", &true)?;
+                s.serialize_field("value", value)?;
+            }
+            Err(error) => {
+                s.serialize_field("ok", &false)?;
+                s.serialize_field("error", error)?;
+            }
+        }
+        s.end()
+    }
+
+    #[derive(Deserialize)]
+    struct Repr<T, E> {
+        ok: bool,
+        value: Option<T>,
+        error: Option<E>,
+    }
+
+    pub fn deserialize<'de, T: Deserialize<'de>, E: Deserialize<'de>, D: Deserializer<'de>>(
+        deserializer: D,
+    ) -> Result<Result<T, E>, D::Error> {
+        match Repr::<T, E>::deserialize(deserializer)? {
+            Repr {
+                ok: true,
+                value: Some(value),
+                ..
+            } => Ok(Ok(value)),
+            Repr {
+                ok: false,
+                error: Some(error),
+                ..
+            } => Ok(Err(error)),
+            _ => Err(de::Error::custom(
+                "expected `{ ok: true, value }` or `{ ok: false, error }`",
+            )),
+        }
+    }
+
+    pub fn to_js_value<T: Serialize, E: Serialize>(result: &Result<T, E>) -> wasm_bindgen::JsValue {
+        serialize(result, &serde_wasm_bindgen::Serializer::new()).unwrap()
+    }
+}
 pub use attenuate::attenuate_token;
 pub use execute::execute;
 pub use generate_token::generate_token;
@@ -31,6 +84,13 @@ extern "C" {
     // `log(..)`
     #[wasm_bindgen(js_namespace = console)]
     fn log(s: &str);
+}
+
+#[wasm_bindgen]
+pub fn error_message(error: JsValue) -> Option<String> {
+    serde_wasm_bindgen::from_value::<error::Token>(error)
+        .ok()
+        .map(|e| e.to_string())
 }
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
@@ -93,6 +153,7 @@ impl From<builder::Fact> for Fact {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryResult {
+    #[serde(with = "crate::js_result")]
     pub facts: Result<Vec<Fact>, error::Token>,
     pub elapsed_micros: Option<u128>,
     pub steps: u64,

@@ -17,6 +17,7 @@ struct InspectSnapshotQuery {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct InspectionResult {
+    #[serde(with = "crate::js_result")]
     pub snapshot: Result<ParseResult, error::Token>,
 }
 
@@ -26,6 +27,7 @@ struct ParseResult {
     pub iterations: u64,
     pub elapsed_micros: Option<u128>,
     pub steps: u64,
+    #[serde(with = "crate::js_result")]
     pub authorization_result: Result<usize, error::Token>,
     pub query_result: Option<QueryResult>,
 }

@@ -22,6 +22,7 @@ pub struct GenerateToken {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", content = "value", rename_all = "snake_case")]
 pub enum GenerateTokenError {
     Parse(ParseErrors),
     Biscuit(error::Token),
