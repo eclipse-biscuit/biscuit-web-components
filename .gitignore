@@ -1,2 +1,4 @@
 node_modules
 dist
+wasm/target
+src/biscuit-wasm

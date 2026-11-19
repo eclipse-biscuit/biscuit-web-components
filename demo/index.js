@@ -4,7 +4,7 @@ import '/src/bc-authorizer-editor.js';
 import '/src/bc-authorizer-result';
 import '/src/bc-authorizer-content.js';
 import '/src/bc-token-generator.js';
-import init, {execute} from "@biscuit-auth/biscuit-wasm-support"
+import init, {execute} from "/src/biscuit-wasm/biscuit.js"
 
 
 var state = {

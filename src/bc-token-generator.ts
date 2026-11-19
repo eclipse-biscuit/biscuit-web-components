@@ -12,7 +12,7 @@ import {
   generate_keypair,
   generate_ecdsa_keypair,
   get_public_key,
-} from "@biscuit-auth/biscuit-wasm-support";
+} from "./biscuit-wasm/biscuit.js";
 import {
   LibError,
   Result,

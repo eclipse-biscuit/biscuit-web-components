@@ -1,3 +1,5 @@
+> This changelog covers the releases of `@biscuit-auth/biscuit-wasm-support`, before it was bundled in `@biscuit-auth/web-components`. It is kept for historical purposes only and is no longer updated.
+
 # 0.7.0
 
 - `biscuit-auth@7.0.0`

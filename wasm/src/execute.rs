@@ -65,7 +65,7 @@ fn execute_inner(query: BiscuitQuery) -> Result<BiscuitResult, ParseErrors> {
 
     let serialized = generate_token::generate_token_inner(creation_query).map_err(|e| match e {
         generate_token::GenerateTokenError::Parse(e) => e,
-        _ => panic!("Unhandled error happened"),
+        e => panic!("Unhandled error happened: {:?}", e),
     })?;
 
     let execute_query = execute_serialized::BiscuitQuery {
