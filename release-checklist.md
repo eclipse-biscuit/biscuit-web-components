@@ -8,10 +8,13 @@ Eclipse projects can only be released within the validity period of a release re
 
 - make sure `README.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md` are present and up-to-date
 - make sure `LICENSE` is present and that all source files are properly annotated with copyright and license information
-- make sure dependency license information is correctly vetted:
+- make sure dependency license information is correctly vetted, **both for the npm package and the wasm crate**:
 
 ```bash
 java -jar org.eclipse.dash.licenses-1.1.0.jar package-lock.json
+
+cd wasm
+cargo tree -e normal --prefix none --no-dedupe | sort -u | grep -v '^[[:space:]]*$'  | grep -v biscuit  | sed -E 's|([^ ]+) v([^ ]+).*|crate/cratesio/-/\1/\2|' | java -jar org.eclipse.dash.licenses-1.1.0.jar - 
 ```
 
 (you’ll need to download the [eclipse dash licenses jar](repo.eclipse.org/content/repositories/dash-licenses/org/eclipse/dash/org.eclipse.dash.licenses/))
@@ -33,5 +36,4 @@ We can assume that the following lifecycles are coupled:
 - [biscuit-auth](https://eclipse-biscuit/biscuit-rust)
 - [biscuit-capi](https://eclipse-biscuit/biscuit-rust)
 - [biscuit-cli](https://github.com/eclipse-biscuit/biscuit-cli)
-- [biscuit-component-wasm](https://github.com/eclipse-biscuit/biscuit-component-wasm)
 - biscuit-web-components (this repo)

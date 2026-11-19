@@ -15,5 +15,5 @@ import "./bc-datalog-playground";
 import "./bc-token-printer";
 import "./bc-token-generator";
 import "./bc-snapshot-printer";
-export { execute } from "@biscuit-auth/biscuit-wasm-support";
+export { execute } from "./biscuit-wasm/biscuit.js";
 export { initialize } from "./wasm.js";

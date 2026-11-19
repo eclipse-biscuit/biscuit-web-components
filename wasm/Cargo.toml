@@ -1,0 +1,29 @@
+[package]
+name = "biscuit-wasm-support"
+description = "WebAssembly support library for the biscuit web components"
+authors = ["Geoffroy Couprie <contact@geoffroycouprie.com>"]
+edition = "2018"
+license = "Apache-2.0"
+repository = "https://github.com/eclipse-biscuit/biscuit-web-components"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = { version = "0.2.78", features = ["serde-serialize"] }
+serde-wasm-bindgen = "0.4.5"
+biscuit-auth = { version = "7.0.0-alpha.4", features = ["wasm", "serde-types"] }
+rand = "0.10"
+getrandom = { version = "0.4", features = ["wasm_js"] }
+log = "0.4"
+wasm-logger = "0.2"
+console_error_panic_hook = "0.1"
+base64 = "0.13"
+wee_alloc = "0.4"
+nom = "8"
+serde = { version = "1.0", features = ["derive"] }
+hex = "0.4.3"
+
+[profile.release]
+codegen-units = 1
+opt-level = "z"

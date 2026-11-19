@@ -7,7 +7,7 @@ import { css, html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import "./bc-datalog-editor";
 import { initialize } from "./wasm.js";
-import { inspect_snapshot } from "@biscuit-auth/biscuit-wasm-support";
+import { inspect_snapshot } from "./biscuit-wasm/biscuit.js";
 import {
   AuthorizerError,
   AuthorizerResult,

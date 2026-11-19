@@ -7,7 +7,7 @@ import { html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { Range } from "./bc-datalog-editor";
 import { initialize } from "./wasm.js";
-import { execute } from "@biscuit-auth/biscuit-wasm-support";
+import { execute } from "./biscuit-wasm/biscuit.js";
 import {
   convertMarker,
   convertError,

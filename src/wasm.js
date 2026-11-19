@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-import init from "@biscuit-auth/biscuit-wasm-support";
+import init from "./biscuit-wasm/biscuit.js";
 
 let loadPromise = null;
 export async function initialize() {
