@@ -103,10 +103,10 @@ export class BcSnapshotPrinter extends LitElement {
       `;
     }
 
-    if (result.snapshot.Err) {
+    if (!result.snapshot.ok) {
       return html`
         ${this.renderSnapshotInput()}
-        <div class="content">${result.snapshot.Err}</div>
+        <div class="content">${result.snapshot.error.type}</div>
       `;
     }
 
@@ -117,10 +117,11 @@ export class BcSnapshotPrinter extends LitElement {
       steps,
       authorization_result,
       query_result,
-    } = result.snapshot.Ok!;
+    } = result.snapshot.value;
 
     const auth_res: Result<AuthorizerResult, AuthorizerError> = {
-      Ok: {
+      ok: true,
+      value: {
         authorizer_editor: { markers: [] },
         authorizer_result: authorization_result,
         authorizer_world: [],
@@ -164,7 +165,8 @@ export class BcSnapshotPrinter extends LitElement {
       extra_authorizer: this.authorizer != "" ? this.authorizer : undefined,
       query: this.query != "" ? this.query : undefined,
     };
-    const parseResult = inspect_snapshot(inspectQuery);
+    const parseResult: SnapshotInspectionResult =
+      inspect_snapshot(inspectQuery);
     console.log({ parseResult });
 
     return html` <div class="row">${this.renderResult(parseResult)}</div> `;

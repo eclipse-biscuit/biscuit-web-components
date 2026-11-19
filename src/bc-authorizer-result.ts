@@ -22,15 +22,17 @@ export class BcAuthorizerResult extends LitElement {
 
   renderLogicError(e: LogicError) {
     const failedChecksCount =
-      e.Unauthorized?.checks.length ?? e.NoMatchingPolicy?.checks.length ?? 0;
+      e.type === "unauthorized" || e.type === "no_matching_policy"
+        ? e.value.checks.length
+        : 0;
     const failedChecks =
       failedChecksCount > 0
         ? html`<pre>${failedChecksCount} failed checks</pre>`
         : null;
     let policyError;
-    if (e.NoMatchingPolicy) {
+    if (e.type === "no_matching_policy") {
       policyError = html`<pre>No policy matched</pre>`;
-    } else if (e.Unauthorized && e.Unauthorized.policy.Deny !== undefined) {
+    } else if (e.type === "unauthorized" && e.value.policy.type === "deny") {
       policyError = html`<pre>A deny policy matched</pre>`;
     }
 
@@ -38,10 +40,22 @@ export class BcAuthorizerResult extends LitElement {
   }
 
   renderResult() {
-    const logicError = this.content?.Ok?.authorizer_result?.Err?.FailedLogic;
-    const parsingError = this.content?.Err?.token;
-    const publicKeyError = this.content?.Err?.root_key;
-    const success = this.content?.Ok?.authorizer_result?.Ok !== undefined;
+    const content = this.content;
+    const authorizerResult = content?.ok
+      ? content.value.authorizer_result
+      : undefined;
+    const authorizerError =
+      authorizerResult && !authorizerResult.ok
+        ? authorizerResult.error
+        : undefined;
+    const logicError =
+      authorizerError?.type === "failed_logic"
+        ? authorizerError.value
+        : undefined;
+    const contentError = content && !content.ok ? content.error : undefined;
+    const parsingError = contentError?.token;
+    const publicKeyError = contentError?.root_key;
+    const success = authorizerResult?.ok === true;
     if (success) {
       return html`<div><pre>Success</pre></div>`;
     } else if (logicError) {
@@ -50,7 +64,7 @@ export class BcAuthorizerResult extends LitElement {
       return html`<div><pre>Public key parsing error</pre></div>`;
     } else if (parsingError) {
       return html`<div><pre>Token parsing error</pre></div>`;
-    } else if (this.content?.Err) {
+    } else if (contentError) {
       return html`<div><pre>Datalog execution error</pre></div>`;
     } else {
       console.error(this.content);

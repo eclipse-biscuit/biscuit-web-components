@@ -23,12 +23,12 @@ export function renderQueryResult({
     <p>Query elapsed time: ${renderDuration(elapsed_micros)}</p>
     <p>Query steps: ${steps}</p>
   `;
-  if (facts.Err) {
-    console.error(facts.Err);
+  if (!facts.ok) {
+    console.error(facts.error);
     return html`${stats}
       <p>error</p>`;
   } else {
-    return html`${stats}<bc-authorizer-content .content=${facts.Ok!}>
+    return html`${stats}<bc-authorizer-content .content=${facts.value}>
       </bc-authorizer-content>`;
   }
 }
