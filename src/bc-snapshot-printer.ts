@@ -7,10 +7,7 @@ import { css, html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import "./bc-datalog-editor";
 import { initialize } from "./wasm.js";
-import {
-  error_message,
-  inspect_snapshot,
-} from "@biscuit-auth/biscuit-wasm-support";
+import { inspect_snapshot } from "@biscuit-auth/biscuit-wasm-support";
 import {
   AuthorizerError,
   AuthorizerResult,
@@ -109,9 +106,7 @@ export class BcSnapshotPrinter extends LitElement {
     if (!result.snapshot.ok) {
       return html`
         ${this.renderSnapshotInput()}
-        <div class="content">
-          ${error_message(result.snapshot.error) ?? result.snapshot.error.type}
-        </div>
+        <div class="content">${result.snapshot.error.type}</div>
       `;
     }
 
