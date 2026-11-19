@@ -1,0 +1,25 @@
+{
+  "name": "@biscuit-auth/biscuit-wasm-support",
+  "type": "module",
+  "collaborators": [
+    "Geoffroy Couprie <contact@geoffroycouprie.com>"
+  ],
+  "description": "WebAssembly support library for the biscuit web components",
+  "version": "0.7.0-alpha.2",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eclipse-biscuit/biscuit-component-wasm"
+  },
+  "files": [
+    "biscuit_bg.wasm",
+    "biscuit.js",
+    "biscuit.d.ts",
+    "snippets"
+  ],
+  "main": "biscuit.js",
+  "types": "biscuit.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
