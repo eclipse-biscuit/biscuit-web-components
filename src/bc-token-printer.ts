@@ -11,7 +11,7 @@ import {
   execute_serialized,
   parse_token,
   attenuate_token,
-} from "@biscuit-auth/biscuit-wasm-support";
+} from "./biscuit-wasm/biscuit.js";
 import {
   AttenuationError,
   AuthorizerError,

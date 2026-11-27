@@ -7,21 +7,26 @@
   "files": [
     "dist/"
   ],
+  "sideEffects": [
+    "./dist/esm/src/biscuit-wasm/snippets/*",
+    "./dist/esm/src/bc-*.js",
+    "./dist/esm/src/index.js"
+  ],
   "author": "Geoffroy Couprie",
-  "version": "0.7.0-alpha.1",
+  "version": "0.8.0-alpha.2",
   "scripts": {
-    "start": "wds --node-resolve --open demo/",
-    "serve": "wds --node-resolve --open demo/ --watch",
+    "build:wasm": "wasm-pack build wasm --target web --out-dir ../src/biscuit-wasm --out-name biscuit --no-pack && rm src/biscuit-wasm/.gitignore",
+    "start": "npm run build:wasm && wds --node-resolve --open demo/",
+    "serve": "npm run build:wasm && wds --node-resolve --open demo/ --watch",
     "test": "wtr test/**/*.test.js --node-resolve",
     "test:watch": "wtr --watch test/**/*.test.js --node-resolve",
-    "build": "tsc",
-    "prepublishOnly": "npm run build-lint && tsc && cp -r assets dist/esm/",
+    "build": "npm run build:wasm && tsc && cp -r src/biscuit-wasm dist/esm/src/",
+    "prepublishOnly": "npm run build && npm run build-lint && cp -r assets dist/esm/",
     "build-lint": "tsc && eslint src --ext .ts && prettier -c src",
     "format": "prettier -w src",
     "lint-fix": "eslint src --ext .ts --fix"
   },
   "dependencies": {
-    "@biscuit-auth/biscuit-wasm-support": "0.7.0-alpha.2",
     "@typescript-eslint/eslint-plugin": "^5.7.0",
     "@typescript-eslint/parser": "^5.7.0",
     "lit": "^2.0.0",
